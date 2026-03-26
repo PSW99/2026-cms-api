@@ -1,0 +1,49 @@
+## server
+server:
+  port: 8080
+
+## spring
+spring:
+  application:
+    name: simple-cms-api
+  h2:
+    console:
+      enabled: on
+  sql:
+    init:
+      mode: embedded
+      schema-locations: classpath:db/sql/h2-schema.sql
+      data-locations: classpath:db/sql/h2-data.sql
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:test
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+  threads:
+    virtual:
+      enabled: on
+
+
+## p6spy
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: on
+
+## logging
+logging:
+  charset:
+    console: UTF-8
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:%-5p} ${PID} --- [%15.15t] %-40.40logger{39} :%06L : %m%n"
+  level:
+    root: info
+    web: info
+    com.malgn: debug
