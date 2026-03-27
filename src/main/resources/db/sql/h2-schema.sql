@@ -1,4 +1,5 @@
 -- members 테이블
+drop table if exists members cascade;
 create table members
 (
     id                 bigint primary key      not null auto_increment,
@@ -11,6 +12,7 @@ create table members
 );
 
 -- contents 테이블
+drop table if exists contents cascade;
 create table contents
 (
     id                 bigint primary key      not null auto_increment,
