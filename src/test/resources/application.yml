@@ -1,0 +1,4 @@
+## JWT (테스트용)
+jwt:
+  secret: dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0LW9ubHktMjU2Yml0LXNlY3VyZS1rZXkhISE=
+  expiration-ms: 3600000

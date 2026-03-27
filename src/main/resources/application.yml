@@ -4,6 +4,8 @@ server:
 
 ## spring
 spring:
+  profiles:
+    active: local
   application:
     name: simple-cms-api
   h2:
@@ -47,3 +49,8 @@ logging:
     root: info
     web: info
     com.malgn: debug
+
+## JWT
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-ms: 3600000  # 1시간
