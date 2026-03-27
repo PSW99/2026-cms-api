@@ -50,5 +50,5 @@ logging:
 
 ## JWT
 jwt:
-  secret: dGhpcyBpcyBhIHZlcnkgc2VjdXJlIHNlY3JldCBrZXkgZm9yIGp3dCB0b2tlbiBnZW5lcmF0aW9uIDIwMjY=
+  secret: ${JWT_SECRET}
   expiration-ms: 3600000  # 1시간
