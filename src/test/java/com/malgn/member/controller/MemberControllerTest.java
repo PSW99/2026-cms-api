@@ -2,6 +2,10 @@ package com.malgn.member.controller;
 
 import tools.jackson.databind.ObjectMapper;
 import com.malgn.member.dto.MemberCreateRequest;
+import com.malgn.member.entity.Member;
+import com.malgn.member.entity.Role;
+import com.malgn.member.repository.MemberRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -9,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.profiles.active=test",
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.sql.init.mode=always"
+})
 @AutoConfigureMockMvc
 @Transactional
-@ActiveProfiles("test")
 class MemberControllerTest {
 
     @Autowired
@@ -29,6 +37,22 @@ class MemberControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @BeforeEach
+    void setUp() {
+        memberRepository.save(Member.builder()
+            .username("admin")
+            .password(passwordEncoder.encode("admin123"))
+            .name("관리자")
+            .role(Role.ADMIN)
+            .build());
+    }
 
     @Nested
     @DisplayName("POST /api/members")
