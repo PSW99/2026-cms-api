@@ -47,3 +47,8 @@ logging:
     root: info
     web: info
     com.malgn: debug
+
+## JWT
+jwt:
+  secret: dGhpcyBpcyBhIHZlcnkgc2VjdXJlIHNlY3JldCBrZXkgZm9yIGp3dCB0b2tlbiBnZW5lcmF0aW9uIDIwMjY=
+  expiration-ms: 3600000  # 1시간
