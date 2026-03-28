@@ -380,8 +380,7 @@ class ContentsControllerTest {
             mockMvc.perform(delete("/api/contents/" + contentsId2)
                             .header("Authorization", bearer(user1Token)))
                     .andDo(print())
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.status").value(204));
+                    .andExpect(status().isNoContent());
 
             // 삭제 후 조회 시 404
             mockMvc.perform(get("/api/contents/" + contentsId2)
@@ -395,7 +394,7 @@ class ContentsControllerTest {
             mockMvc.perform(delete("/api/contents/" + contentsId2)
                             .header("Authorization", bearer(adminToken)))
                     .andDo(print())
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
         }
 
         @Test

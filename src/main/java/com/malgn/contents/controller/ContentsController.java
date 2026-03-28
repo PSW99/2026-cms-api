@@ -57,8 +57,8 @@ public class ContentsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         contentsService.delete(id);
-        return ResponseEntity.ok(ApiResponse.noContent());
+        return ResponseEntity.noContent().build();
     }
 }
