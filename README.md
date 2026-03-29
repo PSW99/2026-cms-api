@@ -1,91 +1,175 @@
-# 2026 신입 Back-End 개발자 코딩 과제 - 간단한 CMS REST API
+# CMS REST API
 
-2026년도 신입 Back-End 개발자 코딩 과제입니다.
-간단한 CMS(Contents Management System) REST API 를 구현하는 것이 목표입니다.
+간단한 CMS(Contents Management System) REST API입니다.  
+JWT 기반 Stateless 인증, 콘텐츠 CRUD, 역할 기반 접근 권한을 구현했습니다.
 
-외부 자료 검색 및 AI 도구 사용을 허용합니다. 다만, 제출물에 활용한 도구와 방식을 간단하게 명시해주시기 바랍니다.
+## 기술 스택
 
-## Spec
+- **Java 25** (Amazon Corretto)
+- **Spring Boot 4.0.3**
+- **Spring Security** — JWT 기반 Stateless 인증
+- **Spring Data JPA** — ORM + Auditing (`@CreatedBy`, `@LastModifiedBy`)
+- **H2 Database** — 인메모리 DB
+- **QueryDSL 7.1** — 타입 안전 쿼리 (확장 대비)
+- **jjwt 0.12.6** — JWT 토큰 생성/검증
+- **springdoc-openapi 3.0.1** — Swagger UI / OpenAPI 3 자동 생성
+- **Lombok**, **p6spy** (SQL 로깅)
 
-- Java 25
-- Spring Boot 4
-- Spring Security
-- JPA
-- H2 (db)
-- Lombok (필요시)
+## 인증 방식
 
-## 과제 목표
+**JWT (JSON Web Token) Access Token** 방식을 사용합니다.
 
-- 간단한 CMS 콘텐츠 관리 API 를 구현 해주세요.
-- DB Schema 모두 구현해주세요.
-- DB 는 h2 를 사용해주세요.
-- 가능한 예외처리도 구현해주세요.
-- 필요하다고 생각되는 부분은 추가로 구현해도 됩니다.
+- 로그인 성공 시 JWT Access Token을 발급합니다 (유효 시간: 1시간)
+- 이후 요청 시 `Authorization: Bearer {token}` 헤더에 토큰을 포함합니다
+- 서버는 Stateless로 동작하며, 세션을 사용하지 않습니다
+- 선택 근거는 `docs/adr/001-authentication-strategy.md`에 기록했습니다
 
-## 데이터 모델
+## 실행 방법
 
-### Contents
+### 사전 조건
+- Java 25 설치 (sdkman 사용 시: `sdk install java 25.0.1-amzn`)
+- `src/main/resources/application-local.yml`에 JWT secret 설정 필요:
 
-| 컬럼명                | 이름  | 설명          | 데이터 타입                      | 비고 |
-|--------------------|-----|-------------|-----------------------------|----|
-| id                 | 아이디 | 고유 아이디      | bigint primary key not null |    |
-| title              | 제목  | contents 제목 | varchar(100) not null       |    |
-| description        | 내용  | contents 내용 | text                        |    |
-| view_count         | 조회수 | 조회수         | bigint not null             |    |
-| created_date       | 생성일 | 생성한 날짜      | timestamp                   |    |
-| created_by         | 생성자 | 생성한 사용자     | varchar(50) not null        |    |
-| last_modified_date | 수정일 | 마지막 수정일     | timestamp                   |    |
-| last_modified_by   | 수정자 | 마지막 수정한 사용자 | varchar(50)                 |    |
+```yaml
+jwt:
+  secret: dGhpcyBpcyBhIHZlcnkgc2VjdXJlIHNlY3JldCBrZXkgZm9yIGp3dCB0b2tlbiBnZW5lcmF0aW9uIDIwMjY=
+```
 
-## 구현 기능
+### 실행
+```bash
+./gradlew bootRun
+```
 
-### 콘텐츠 관련 CRUD
+### 접속
+- **API 서버**: http://localhost:8080
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
+- **H2 Console**: http://localhost:8080/h2-console
+  - JDBC URL: `jdbc:h2:mem:test`
+  - Username: `sa` / Password: (없음)
 
-시스템에 등록된 콘텐츠에 대한 CRUD 를 필수로 구현해주세요.
+### 초기 계정
+| 아이디 | 비밀번호 | 역할 |
+|--------|----------|------|
+| admin | admin123 | ADMIN |
+| user1 | user123 | USER |
 
-#### 기능
-- 콘텐츠 추가
-- 콘텐츠 목록 조회
-  - 반드시 페이징 처리를 해주세요.
-- 콘텐츠 상세 조회
-- 콘텐츠 수정
-- 콘텐츠 삭제
-
+## API 사용 예시
 
 ### 로그인
-- Spring Security 를 이용해서 로그인을 필수로 구현해주세요.
-- 로그인 방식은 자유롭게 선택하여 구현하되, `README.md` 에 명시해주세요
-- Role
-    - 관리자(ADMIN)
-    - 사용자(USER)
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+```
 
-### 접근 권한
+### 콘텐츠 생성
+```bash
+curl -X POST http://localhost:8080/api/contents \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {토큰}" \
+  -d '{"title": "새 콘텐츠", "description": "내용입니다."}'
+```
 
-- 접근 권한을 필수로 구현해주세요.
-- 콘텐츠 생성자 본인만 수정 + 삭제 가능하게 구현해주세요.
-- 단, 관리자(ADMIN) 인 경우 모든 콘텐츠에 대해 수정 + 삭제할 수 있게 구현해주세요.
+### 콘텐츠 목록 조회 (페이징)
+```bash
+curl "http://localhost:8080/api/contents?page=0&size=10" \
+  -H "Authorization: Bearer {토큰}"
+```
 
-## 제출
+## API 엔드포인트
 
-### 기한
+| Method | URL | 설명 | 인증 | 권한 |
+|--------|-----|------|------|------|
+| POST | `/api/members` | 회원가입 | X | - |
+| POST | `/api/auth/login` | 로그인 | X | - |
+| POST | `/api/contents` | 콘텐츠 생성 | O | 모든 사용자 |
+| GET | `/api/contents` | 목록 조회 (페이징) | O | 모든 사용자 |
+| GET | `/api/contents/{id}` | 상세 조회 (조회수 증가) | O | 모든 사용자 |
+| PUT | `/api/contents/{id}` | 수정 | O | 본인 / ADMIN |
+| DELETE | `/api/contents/{id}` | 삭제 | O | 본인 / ADMIN |
 
-- 본 메일 수신 후 26.03.09(월) 오후 3시까지 (주)맑은기술 채용 메일(recruit@malgn.com) 로 보내주시기 바랍니다. 
+상세 API 명세는 `docs/REST-API-DOCS.md` 또는 Swagger UI를 참고해주세요.
 
-### 제출물
+## 접근 권한 정책
 
-- 소스코드 (Zip 또는 Github repository 링크)
-- README.md
-    - 추가 내용이나 제출물 관련 내용을 추가헤주세요.
-    - 사용한 AI 또는 참고 자료가 있다면 간단히 명시
-- REST API Docs
-    - 자유롭게 작성해서 첨부해주세요.
+- **콘텐츠 조회** (목록/상세): 인증된 모든 사용자
+- **콘텐츠 생성**: 인증된 모든 사용자
+- **콘텐츠 수정/삭제**: 콘텐츠 생성자 본인 또는 ADMIN
+- **회원가입, 로그인**: 인증 불필요
 
+## 프로젝트 구조
 
+```
+src/main/java/com/malgn/
+├── Application.java
+├── auth/                          # 인증
+│   ├── controller/AuthController
+│   ├── dto/LoginRequest, LoginResponse
+│   ├── filter/JwtAuthenticationFilter
+│   └── provider/JwtTokenProvider
+├── member/                        # 회원
+│   ├── controller/MemberController
+│   ├── dto/MemberCreateRequest, MemberResponse
+│   ├── entity/Member, Role
+│   ├── repository/MemberRepository
+│   └── service/MemberService
+├── contents/                      # 콘텐츠
+│   ├── controller/ContentsController
+│   ├── dto/ContentsCreateRequest, ContentsUpdateRequest, ContentsResponse
+│   ├── entity/Contents
+│   ├── repository/ContentsRepository
+│   └── service/ContentsService
+├── common/                        # 공통
+│   ├── config/JpaAuditingConfiguration
+│   ├── dto/ApiResponse, PageResponse
+│   └── exception/GlobalExceptionHandler, EntityNotFoundException, DuplicateResourceException
+└── configure/                     # 설정
+    ├── OpenApiConfiguration
+    ├── AppConfiguration
+    └── security/
+        ├── SecurityConfiguration
+        ├── ActuatorSecurityConfiguration
+        ├── H2DbSecurityConfiguration
+        ├── JwtAuthenticationEntryPoint
+        └── JwtAccessDeniedHandler
+```
 
+## 테스트
 
+```bash
+# 전체 테스트 실행
+./gradlew test
 
+# 테스트 리포트 확인
+open build/reports/tests/test/index.html
+```
 
+### 테스트 구성
+| 테스트 클래스 | 유형 | 개수 |
+|--------------|------|------|
+| JwtTokenProviderTest | 단위 | 11 |
+| MemberServiceTest | 단위 (Mockito) | 5 |
+| ContentsServiceTest | 단위 (Mockito) | 15 |
+| AuthControllerTest | 통합 (MockMvc) | 6 |
+| MemberControllerTest | 통합 (MockMvc) | 8 |
+| ContentsControllerTest | 통합 (MockMvc) | 20 |
 
+## 설계 결정 (ADR)
 
+주요 설계 결정은 `docs/adr/` 디렉토리에 기록했습니다.
 
+- `001-authentication-strategy.md` — 인증 방식 선택 (JWT)
+- `002-api-design-convention.md` — REST API 설계 규칙
+- `003-exception-handling-strategy.md` — 예외 처리 전략
+- `004-authorization-strategy.md` — 콘텐츠 접근 권한 전략
+- `005-jpa-auditing-strategy.md` — JPA Auditing 전략
 
+## CI/CD
+
+GitHub Actions로 push/PR 시 자동 빌드 + 테스트를 수행합니다.
+`.github/workflows/ci.yml` 참고.
+
+## 사용 도구
+
+- **Claude (Anthropic)** — 코드 구현 보조, 설계 결정 논의, 문서 작성 보조
+- **Coderabbit** - PR 코드 리뷰
