@@ -21,7 +21,7 @@ create table contents
     view_count         bigint             not null default 0,
     deleted            boolean            not null default false,
     deleted_date       timestamp,
-    created_date       timestamp                   default now(),
+    created_date       timestamp          not null  default now(),
     created_by         varchar(50)        not null,
     last_modified_date timestamp,
     last_modified_by   varchar(50)
