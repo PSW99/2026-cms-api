@@ -27,9 +27,9 @@ public class ContentsService {
     @Transactional
     public ContentsResponse create(ContentsCreateRequest request) {
         Contents contents = Contents.builder()
-            .title(request.title())
-            .description(request.description())
-            .build();
+                .title(request.title())
+                .description(request.description())
+                .build();
 
         Contents saved = contentsRepository.save(contents);
         return ContentsResponse.from(saved);
@@ -37,7 +37,7 @@ public class ContentsService {
 
     public PageResponse<ContentsResponse> getList(Pageable pageable) {
         Page<ContentsResponse> page = contentsRepository.findAll(pageable)
-            .map(ContentsResponse::from);
+                .map(ContentsResponse::from);
         return PageResponse.from(page);
     }
 
@@ -61,13 +61,43 @@ public class ContentsService {
     public void delete(Long id) {
         Contents contents = findContentsById(id);
         validateOwnerOrAdmin(contents);
+        contents.softDelete();
+    }
 
-        contentsRepository.delete(contents);
+    @Transactional
+    public ContentsResponse restore(Long id) {
+        Contents contents = contentsRepository.findByIdIncludingDeleted(id)
+                .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. id=" + id));
+
+        if (!contents.getDeleted()) {
+            throw new IllegalArgumentException("삭제되지 않은 콘텐츠입니다.");
+        }
+
+        validateAdminOnly();
+        contents.restore();
+        return ContentsResponse.from(contents);
+    }
+
+    public PageResponse<ContentsResponse> getDeletedList(Pageable pageable) {
+        validateAdminOnly();
+        Page<ContentsResponse> page = contentsRepository.findAllDeleted(pageable)
+                .map(ContentsResponse::from);
+        return PageResponse.from(page);
+    }
+
+    private void validateAdminOnly() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        if (!isAdmin) {
+            throw new AccessDeniedException("관리자만 접근할 수 있습니다.");
+        }
     }
 
     private Contents findContentsById(Long id) {
         return contentsRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. id=" + id));
+                .orElseThrow(() -> new EntityNotFoundException("콘텐츠를 찾을 수 없습니다. id=" + id));
     }
 
     private void validateOwnerOrAdmin(Contents contents) {
@@ -75,8 +105,8 @@ public class ContentsService {
         String currentUsername = (String) authentication.getPrincipal();
 
         boolean isAdmin = authentication.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .anyMatch("ROLE_ADMIN"::equals);
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
 
         if (isAdmin) {
             return;

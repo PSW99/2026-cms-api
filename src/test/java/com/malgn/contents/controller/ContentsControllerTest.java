@@ -415,4 +415,117 @@ class ContentsControllerTest {
                     .andExpect(status().isNotFound());
         }
     }
+
+    @Nested
+    @DisplayName("소프트 삭제 및 복원")
+    class SoftDelete {
+
+        @Test
+        @DisplayName("삭제된 콘텐츠는 목록에서 조회되지 않는다")
+        void deletedContentNotInList() throws Exception {
+            // given - 콘텐츠 삭제
+            mockMvc.perform(delete("/api/contents/" + contentsId2)
+                            .header("Authorization", bearer(user1Token)))
+                    .andExpect(status().isNoContent());
+
+            // when & then - 목록 조회 시 삭제된 항목 제외
+            mockMvc.perform(get("/api/contents")
+                            .header("Authorization", bearer(adminToken))
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.totalElements").value(1));
+        }
+
+        @Test
+        @DisplayName("삭제된 콘텐츠는 상세 조회 시 404를 반환한다")
+        void deletedContentReturns404() throws Exception {
+            // given
+            mockMvc.perform(delete("/api/contents/" + contentsId1)
+                            .header("Authorization", bearer(adminToken)))
+                    .andExpect(status().isNoContent());
+
+            // when & then
+            mockMvc.perform(get("/api/contents/" + contentsId1)
+                            .header("Authorization", bearer(adminToken)))
+                    .andDo(print())
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("ADMIN이 삭제된 콘텐츠 목록을 조회할 수 있다")
+        void adminCanGetDeletedList() throws Exception {
+            // given - 콘텐츠 삭제
+            mockMvc.perform(delete("/api/contents/" + contentsId2)
+                            .header("Authorization", bearer(user1Token)))
+                    .andExpect(status().isNoContent());
+
+            // when & then
+            mockMvc.perform(get("/api/contents/deleted")
+                            .header("Authorization", bearer(adminToken))
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.content").isArray())
+                    .andExpect(jsonPath("$.data.totalElements").value(1))
+                    .andExpect(jsonPath("$.data.content[0].deleted").value(true));
+        }
+
+        @Test
+        @DisplayName("일반 사용자는 삭제된 콘텐츠 목록을 조회할 수 없다")
+        void userCannotGetDeletedList() throws Exception {
+            mockMvc.perform(get("/api/contents/deleted")
+                            .header("Authorization", bearer(user1Token)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("ADMIN이 삭제된 콘텐츠를 복원할 수 있다")
+        void adminCanRestore() throws Exception {
+            // given - 콘텐츠 삭제
+            mockMvc.perform(delete("/api/contents/" + contentsId2)
+                            .header("Authorization", bearer(adminToken)))
+                    .andExpect(status().isNoContent());
+
+            // when - 복원
+            mockMvc.perform(patch("/api/contents/" + contentsId2 + "/restore")
+                            .header("Authorization", bearer(adminToken)))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.deleted").value(false))
+                    .andExpect(jsonPath("$.data.title").value("두 번째 콘텐츠"));
+
+            // then - 다시 조회 가능
+            mockMvc.perform(get("/api/contents/" + contentsId2)
+                            .header("Authorization", bearer(adminToken)))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("일반 사용자는 콘텐츠를 복원할 수 없다")
+        void userCannotRestore() throws Exception {
+            // given
+            mockMvc.perform(delete("/api/contents/" + contentsId2)
+                            .header("Authorization", bearer(user1Token)))
+                    .andExpect(status().isNoContent());
+
+            // when & then
+            mockMvc.perform(patch("/api/contents/" + contentsId2 + "/restore")
+                            .header("Authorization", bearer(user1Token)))
+                    .andDo(print())
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("삭제되지 않은 콘텐츠를 복원하면 400을 반환한다")
+        void restoreNotDeletedReturns400() throws Exception {
+            mockMvc.perform(patch("/api/contents/" + contentsId1 + "/restore")
+                            .header("Authorization", bearer(adminToken)))
+                    .andDo(print())
+                    .andExpect(status().isBadRequest());
+        }
+    }
 }

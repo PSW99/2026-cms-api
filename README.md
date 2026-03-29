@@ -86,7 +86,9 @@ curl "http://localhost:8080/api/contents?page=0&size=10" \
 | GET | `/api/contents` | 목록 조회 (페이징) | O | 모든 사용자 |
 | GET | `/api/contents/{id}` | 상세 조회 (조회수 증가) | O | 모든 사용자 |
 | PUT | `/api/contents/{id}` | 수정 | O | 본인 / ADMIN |
-| DELETE | `/api/contents/{id}` | 삭제 | O | 본인 / ADMIN |
+| DELETE | `/api/contents/{id}` | 소프트 삭제 | O | 본인 / ADMIN |
+| GET | `/api/contents/deleted` | 삭제된 콘텐츠 목록 | O | ADMIN |
+| PATCH | `/api/contents/{id}/restore` | 삭제된 콘텐츠 복원 | O | ADMIN |
 
 상세 API 명세는 `docs/REST-API-DOCS.md` 또는 Swagger UI를 참고해주세요.
 
@@ -95,6 +97,7 @@ curl "http://localhost:8080/api/contents?page=0&size=10" \
 - **콘텐츠 조회** (목록/상세): 인증된 모든 사용자
 - **콘텐츠 생성**: 인증된 모든 사용자
 - **콘텐츠 수정/삭제**: 콘텐츠 생성자 본인 또는 ADMIN
+- **삭제된 콘텐츠 조회/복원**: ADMIN 전용
 - **회원가입, 로그인**: 인증 불필요
 
 ## 프로젝트 구조
@@ -149,10 +152,10 @@ open build/reports/tests/test/index.html
 |--------------|------|------|
 | JwtTokenProviderTest | 단위 | 11 |
 | MemberServiceTest | 단위 (Mockito) | 5 |
-| ContentsServiceTest | 단위 (Mockito) | 15 |
+| ContentsServiceTest | 단위 (Mockito) | 21 |
 | AuthControllerTest | 통합 (MockMvc) | 6 |
 | MemberControllerTest | 통합 (MockMvc) | 8 |
-| ContentsControllerTest | 통합 (MockMvc) | 20 |
+| ContentsControllerTest | 통합 (MockMvc) | 27 |
 
 ## 설계 결정 (ADR)
 
@@ -163,6 +166,7 @@ open build/reports/tests/test/index.html
 - `003-exception-handling-strategy.md` — 예외 처리 전략
 - `004-authorization-strategy.md` — 콘텐츠 접근 권한 전략
 - `005-jpa-auditing-strategy.md` — JPA Auditing 전략
+- `006-soft-delete-strategy.md` — 소프트 삭제 전략
 
 ## CI/CD
 
