@@ -98,4 +98,19 @@ public class ContentsController {
         contentsService.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "삭제된 콘텐츠 목록", description = "ADMIN 전용. 소프트 삭제된 콘텐츠 목록을 조회합니다.")
+    @GetMapping("/deleted")
+    public ResponseEntity<ApiResponse<PageResponse<ContentsResponse>>> getDeletedList(
+            @ParameterObject
+            @PageableDefault(size = 10, sort = "deletedDate", direction = Sort.Direction.DESC)
+            Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(contentsService.getDeletedList(pageable)));
+    }
+
+    @Operation(summary = "삭제된 콘텐츠 복원", description = "ADMIN 전용. 소프트 삭제된 콘텐츠를 복원합니다.")
+    @PatchMapping("/{id}/restore")
+    public ResponseEntity<ApiResponse<ContentsResponse>> restore(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(contentsService.restore(id)));
+    }
 }
