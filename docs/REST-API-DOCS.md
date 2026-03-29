@@ -238,10 +238,11 @@ Authorization: Bearer {accessToken}
 
 ---
 
-### 2-5. 콘텐츠 삭제
+### 2-5. 콘텐츠 삭제 (소프트 삭제)
 - **URL**: `DELETE /api/contents/{id}`
 - **인증**: 필요
 - **권한**: 콘텐츠 생성자 본인 또는 ADMIN
+- **비고**: 실제 DB에서 삭제되지 않고 `deleted=true`로 표시됩니다. 목록/상세 조회에서 제외됩니다.
 
 **Response (204 No Content)**: 본문 없음
 
@@ -249,6 +250,75 @@ Authorization: Bearer {accessToken}
 | 상태 | 설명 |
 |------|------|
 | 403 | 권한 없음 |
+| 404 | 존재하지 않는 콘텐츠 |
+
+---
+
+### 2-6. 삭제된 콘텐츠 목록 조회
+- **URL**: `GET /api/contents/deleted`
+- **인증**: 필요
+- **권한**: ADMIN 전용
+
+**Query Parameters**
+| 파라미터 | 기본값 | 설명 |
+|----------|--------|------|
+| page | 0 | 페이지 번호 (0부터) |
+| size | 10 | 페이지 크기 |
+| sort | deletedDate,desc | 정렬 기준 |
+
+**Response (200 OK)**
+```json
+{
+  "status": 200,
+  "message": "OK",
+  "data": {
+    "content": [
+      {
+        "id": 1,
+        "title": "삭제된 콘텐츠",
+        "deleted": true,
+        "deletedDate": "2026-03-29T14:00:00"
+      }
+    ],
+    "page": 0,
+    "size": 10,
+    "totalElements": 1,
+    "totalPages": 1
+  }
+}
+```
+
+**에러**
+| 상태 | 설명 |
+|------|------|
+| 403 | ADMIN이 아닌 사용자 |
+
+---
+
+### 2-7. 삭제된 콘텐츠 복원
+- **URL**: `PATCH /api/contents/{id}/restore`
+- **인증**: 필요
+- **권한**: ADMIN 전용
+
+**Response (200 OK)**
+```json
+{
+  "status": 200,
+  "message": "OK",
+  "data": {
+    "id": 1,
+    "title": "복원된 콘텐츠",
+    "deleted": false,
+    "deletedDate": null
+  }
+}
+```
+
+**에러**
+| 상태 | 설명 |
+|------|------|
+| 400 | 삭제되지 않은 콘텐츠를 복원 시도 |
+| 403 | ADMIN이 아닌 사용자 |
 | 404 | 존재하지 않는 콘텐츠 |
 
 ---
