@@ -33,6 +33,12 @@ public class Contents {
     @Column(name = "view_count", nullable = false)
     private Long viewCount;
 
+    @Column(nullable = false)
+    private Boolean deleted;
+
+    @Column(name = "deleted_date")
+    private LocalDateTime deletedDate;
+
     @CreatedDate
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
@@ -54,6 +60,17 @@ public class Contents {
         this.title = title;
         this.description = description;
         this.viewCount = 0L;
+        this.deleted = false;
+    }
+
+    public void softDelete() {
+        this.deleted = true;
+        this.deletedDate = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deleted = false;
+        this.deletedDate = null;
     }
 
     public void update(String title, String description) {
