@@ -1,5 +1,8 @@
 package com.malgn.member.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "회원", description = "회원가입 API")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/members")
@@ -22,6 +26,13 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    @SecurityRequirements
+    @Operation(summary = "회원가입", description = "새 회원을 등록합니다. 인증 없이 접근 가능합니다.",
+        responses = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "아이디 중복")
+        })
     @PostMapping
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(
             @Valid @RequestBody MemberCreateRequest request) {

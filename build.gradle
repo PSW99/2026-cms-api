@@ -46,6 +46,9 @@ dependencies {
     // h2
     implementation 'org.springframework.boot:spring-boot-h2console'
 
+    // springdoc-openapi
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1'
+
     // p6spy
     implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:2.0.0'
 
