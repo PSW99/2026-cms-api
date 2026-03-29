@@ -168,6 +168,18 @@ open build/reports/tests/test/index.html
 - `005-jpa-auditing-strategy.md` — JPA Auditing 전략
 - `006-soft-delete-strategy.md` — 소프트 삭제 전략
 
+## 개발 히스토리
+
+주요 기능별 PR 목록입니다.
+
+| PR | 브랜치 | 설명 |
+|----|--------|------|
+| [#1](https://github.com/PSW99/2026-cms-api/pull/1) | feature/member-auth | Member 엔티티 + JWT 인증 구현 |
+| [#2](https://github.com/PSW99/2026-cms-api/pull/2) | feature/contents-crud | Contents CRUD + 페이징 + 권한 체크 |
+| [#3](https://github.com/PSW99/2026-cms-api/pull/3) | feature/swagger | Swagger UI (springdoc-openapi) 추가 |
+| [#4](https://github.com/PSW99/2026-cms-api/pull/5) | feature/soft-delete | 소프트 삭제 + 복원 기능 |
+| [#5](https://github.com/PSW99/2026-cms-api/pull/4) | feature/api-docs-readme | README + REST API 문서 + ADR |
+
 ## CI/CD
 
 GitHub Actions로 push/PR 시 자동 빌드 + 테스트를 수행합니다.
