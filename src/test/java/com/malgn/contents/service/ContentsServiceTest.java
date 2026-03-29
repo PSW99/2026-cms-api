@@ -289,12 +289,12 @@ class ContentsServiceTest {
     }
 
     @Nested
-    @DisplayName("콘텐츠 삭제")
+    @DisplayName("콘텐츠 삭제 (소프트 삭제)")
     class Delete {
 
         @Test
-        @DisplayName("본인 콘텐츠를 삭제할 수 있다")
-        void ownerCanDelete() {
+        @DisplayName("본인 콘텐츠를 소프트 삭제할 수 있다")
+        void ownerCanSoftDelete() {
             // given
             setAuthentication("user1", "USER");
             Contents contents = createTestContents(1L, "제목", "내용", "user1");
@@ -305,12 +305,13 @@ class ContentsServiceTest {
             contentsService.delete(1L);
 
             // then
-            verify(contentsRepository).delete(contents);
+            assertThat(contents.getDeleted()).isTrue();
+            assertThat(contents.getDeletedDate()).isNotNull();
         }
 
         @Test
-        @DisplayName("ADMIN은 다른 사용자의 콘텐츠를 삭제할 수 있다")
-        void adminCanDeleteOthers() {
+        @DisplayName("ADMIN은 다른 사용자의 콘텐츠를 소프트 삭제할 수 있다")
+        void adminCanSoftDeleteOthers() {
             // given
             setAuthentication("admin", "ADMIN");
             Contents contents = createTestContents(1L, "제목", "내용", "user1");
@@ -321,7 +322,8 @@ class ContentsServiceTest {
             contentsService.delete(1L);
 
             // then
-            verify(contentsRepository).delete(contents);
+            assertThat(contents.getDeleted()).isTrue();
+            assertThat(contents.getDeletedDate()).isNotNull();
         }
 
         @Test
@@ -337,7 +339,7 @@ class ContentsServiceTest {
             assertThatThrownBy(() -> contentsService.delete(1L))
                 .isInstanceOf(AccessDeniedException.class);
 
-            verify(contentsRepository, never()).delete(any(Contents.class));
+            assertThat(contents.getDeleted()).isFalse();
         }
 
         @Test
@@ -350,6 +352,110 @@ class ContentsServiceTest {
             // when & then
             assertThatThrownBy(() -> contentsService.delete(999L))
                 .isInstanceOf(EntityNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("콘텐츠 복원")
+    class Restore {
+
+        @Test
+        @DisplayName("ADMIN이 삭제된 콘텐츠를 복원할 수 있다")
+        void adminCanRestore() {
+            // given
+            setAuthentication("admin", "ADMIN");
+            Contents contents = createTestContents(1L, "제목", "내용", "user1");
+            contents.softDelete();
+
+            given(contentsRepository.findByIdIncludingDeleted(1L)).willReturn(Optional.of(contents));
+
+            // when
+            ContentsResponse response = contentsService.restore(1L);
+
+            // then
+            assertThat(contents.getDeleted()).isFalse();
+            assertThat(contents.getDeletedDate()).isNull();
+            assertThat(response.title()).isEqualTo("제목");
+        }
+
+        @Test
+        @DisplayName("삭제되지 않은 콘텐츠를 복원하면 IllegalArgumentException을 던진다")
+        void restoreNotDeletedThrowsException() {
+            // given
+            setAuthentication("admin", "ADMIN");
+            Contents contents = createTestContents(1L, "제목", "내용", "user1");
+
+            given(contentsRepository.findByIdIncludingDeleted(1L)).willReturn(Optional.of(contents));
+
+            // when & then
+            assertThatThrownBy(() -> contentsService.restore(1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("삭제되지 않은 콘텐츠입니다");
+        }
+
+        @Test
+        @DisplayName("일반 사용자가 복원하면 AccessDeniedException을 던진다")
+        void userCannotRestore() {
+            // given
+            setAuthentication("user1", "USER");
+            Contents contents = createTestContents(1L, "제목", "내용", "user1");
+            contents.softDelete();
+
+            given(contentsRepository.findByIdIncludingDeleted(1L)).willReturn(Optional.of(contents));
+
+            // when & then
+            assertThatThrownBy(() -> contentsService.restore(1L))
+                .isInstanceOf(AccessDeniedException.class);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 콘텐츠를 복원하면 EntityNotFoundException을 던진다")
+        void restoreNotFoundThrowsException() {
+            // given
+            setAuthentication("admin", "ADMIN");
+            given(contentsRepository.findByIdIncludingDeleted(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> contentsService.restore(999L))
+                .isInstanceOf(EntityNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("삭제된 콘텐츠 목록 조회")
+    class GetDeletedList {
+
+        @Test
+        @DisplayName("ADMIN이 삭제된 콘텐츠 목록을 조회할 수 있다")
+        void adminCanGetDeletedList() {
+            // given
+            setAuthentication("admin", "ADMIN");
+            Contents deleted = createTestContents(1L, "삭제된 콘텐츠", "내용", "user1");
+            deleted.softDelete();
+
+            Pageable pageable = PageRequest.of(0, 10);
+            Page<Contents> page = new PageImpl<>(List.of(deleted), pageable, 1);
+
+            given(contentsRepository.findAllDeleted(pageable)).willReturn(page);
+
+            // when
+            PageResponse<ContentsResponse> response = contentsService.getDeletedList(pageable);
+
+            // then
+            assertThat(response.content()).hasSize(1);
+            assertThat(response.content().get(0).deleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("일반 사용자가 삭제된 목록을 조회하면 AccessDeniedException을 던진다")
+        void userCannotGetDeletedList() {
+            // given
+            setAuthentication("user1", "USER");
+            Pageable pageable = PageRequest.of(0, 10);
+
+            // when & then
+            assertThatThrownBy(() -> contentsService.getDeletedList(pageable))
+                .isInstanceOf(AccessDeniedException.class);
         }
     }
 }
