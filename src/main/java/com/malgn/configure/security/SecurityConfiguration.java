@@ -38,7 +38,10 @@ public class SecurityConfiguration {
         http.authorizeHttpRequests(request -> request
                 .requestMatchers(
                         PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/auth/login"),
-                        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/members")
+                        PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/api/members"),
+                        PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui/**"),
+                        PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs/**"),
+                        PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs.yaml")
                 ).permitAll()
                 .anyRequest().authenticated()
         );
