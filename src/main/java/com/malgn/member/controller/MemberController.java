@@ -1,6 +1,7 @@
 package com.malgn.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class MemberController {
 
     private final MemberService memberService;
 
+    @SecurityRequirements
     @Operation(summary = "회원가입", description = "새 회원을 등록합니다. 인증 없이 접근 가능합니다.",
         responses = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
